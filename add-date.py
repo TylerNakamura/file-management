@@ -7,21 +7,36 @@ import datetime
 
 
 def creation_date(path_to_file):
+	last_modified = os.path.getmtime(path_to_file)
 	"""
 	Try to get the date that a file was created, falling back to when it was
 	last modified if that isn't possible.
 	See http://stackoverflow.com/a/39501288/1709587 for explanation.
 	"""
 	if platform.system() == 'Windows':
-		return os.path.getctime(path_to_file)
+		ctime = os.path.getctime(path_to_file)
+		if ctime < last_modified:
+			return ctime
+		else:
+			return last_modified
 	else:
 		stat = os.stat(path_to_file)
 		try:
-			return datetime.datetime.utcfromtimestamp(stat.st_birthtime).strftime("%Y-%m-%d")
+			birthtime = stat.st_birthtime
+			print "comparing", birthtime, "and", last_modified
+			if birthtime < last_modified:
+				return datetime.datetime.utcfromtimestamp(birthtime).strftime("%Y-%m-%d")
+			else:
+				return datetime.datetime.utcfromtimestamp(last_modified).strftime("%Y-%m-%d")
 		except AttributeError:
 			# We're probably on Linux. No easy way to get creation dates here,
 			# so we'll settle for when its content was last modified.
-			return stat.st_mtime
+			print "exception caught, you are on Linux, right?"
+			mtime = stat.st_mtime
+			if birthtime < mtime:
+				return datetime.datetime.utcfromtimestamp(birthtime).strftime("%Y-%m-%d")
+			else:
+				return datetime.datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%d")
 
 def files_in_dir(directory):
 	ret_files = []
@@ -35,7 +50,7 @@ def main():
 	parser.add_argument("target", help="the directory to be renamed")
 	args = parser.parse_args()
 	for f in files_in_dir(args.target):
-		newname = creation_date(f)+"-"+os.path.basename(f)
+		newname = creation_date(f)+" "+os.path.basename(f)
 		newpath = os.path.join(os.path.dirname(f),newname)
 		print f
 		print newpath
