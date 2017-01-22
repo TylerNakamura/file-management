@@ -21,13 +21,15 @@ def proper_title(old_title):
     import re
     # find movie title
     # get rid of beginning number
-    print "working on ", old_title
-    temp = old_title.split("-", 1)
+    #print "working on ", old_title
+    temp = old_title.split("-", 1)[1]
 
-    mov_title = re.split(_YEAR, temp[1])
-    # print "mov_title", mov_title
+    # when the year comes before the title
+    #mov_title = re.split(_YEAR, temp[1])
+    # when the comes after the title...
+    mov_title = temp.split(".")[0]
 
-    cap_mov_title = mov_title[0].title()
+    cap_mov_title = mov_title.title()
     cap_mov_title = cap_mov_title.replace(".", " ")
     cap_mov_title = re.sub(' +',' ',cap_mov_title)
     cap_mov_title = cap_mov_title.strip()
@@ -37,7 +39,6 @@ def proper_title(old_title):
 
     # find file type
     file_type = re.search(_VIDEO_TYPE, old_title, re.IGNORECASE)
-
     ret_string = ""
     ret_string += cap_mov_title
     ret_string += " "
@@ -47,6 +48,9 @@ def proper_title(old_title):
     if ")" not in old_title:
         ret_string += ")"
     ret_string += file_type.group()
+
+    # removing double spaces
+    ret_string = re.sub("\s\s+", " ", ret_string) 
 
     return ret_string
 
