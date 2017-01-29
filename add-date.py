@@ -33,10 +33,7 @@ def creation_date(path_to_file):
 			# so we'll settle for when its content was last modified.
 			print "exception caught, you are on Linux, right?"
 			mtime = stat.st_mtime
-			if birthtime < mtime:
-				return datetime.datetime.utcfromtimestamp(birthtime).strftime("%Y-%m-%d")
-			else:
-				return datetime.datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%d")
+			return datetime.datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%d")
 
 def files_in_dir(directory):
 	ret_files = []
