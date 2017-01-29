@@ -5,7 +5,7 @@ import argparse
 import subprocess
 
 # INPUT - full path of target avi
-# This will fuck up if there is .avi in the path and NOT the basename
+# This will fuck up if there is .avi in the path and NOT only in the basename
 def convertavitomp4(f):
 	subprocess.check_call(["avconv", "-i", f, "-c:v", "libx264", "-preset", "veryslow", "-c:a", "copy", f.replace(".avi", ".mp4")])
 
