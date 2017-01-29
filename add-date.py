@@ -23,7 +23,7 @@ def creation_date(path_to_file):
 		stat = os.stat(path_to_file)
 		try:
 			birthtime = stat.st_birthtime
-			print "comparing", birthtime, "and", last_modified
+			#print "comparing", birthtime, "and", last_modified
 			if birthtime < last_modified:
 				return datetime.datetime.utcfromtimestamp(birthtime).strftime("%Y-%m-%d")
 			else:
@@ -48,13 +48,17 @@ def files_in_dir(directory):
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("target", help="the directory to be renamed")
+	parser.add_argument("-i", action="store_true", help="interactively rename files")
 	args = parser.parse_args()
 	for f in files_in_dir(args.target):
 		newname = creation_date(f)+" "+os.path.basename(f)
 		newpath = os.path.join(os.path.dirname(f),newname)
-		print f
-		print newpath
-		os.rename(f, newpath)
+		if args.i:
+			print "Would you like to rename", f, "to", newpath, "? y/n:"
+			if (raw_input() == 'y'):
+				os.rename(f, newpath)
+		else:
+			os.rename(f, newpath)
 
 if __name__ == "__main__":
 	main()
