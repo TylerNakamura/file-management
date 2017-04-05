@@ -46,10 +46,19 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("target", help="the directory to be renamed")
 	parser.add_argument("-i", action="store_true", help="interactively rename files")
+	parser.add_argument("-c", help="Set a custom date")
 	args = parser.parse_args()
+
 	for f in files_in_dir(args.target):
-		newname = creation_date(f)+" "+os.path.basename(f)
+		# if the custom dating argument is set
+		if args.c:
+			newname = args.c + " " + os.path.basename(f)	
+		else:
+			newname = creation_date(f)+" "+os.path.basename(f)
+	
+		# create the new full path with the new name that was just created
 		newpath = os.path.join(os.path.dirname(f),newname)
+	
 		if args.i:
 			print "Would you like to rename", f, "to", newpath, "? y/n:"
 			if (raw_input() == 'y'):
