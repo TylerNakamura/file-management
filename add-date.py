@@ -16,9 +16,9 @@ def creation_date(path_to_file):
 	if platform.system() == 'Windows':
 		ctime = os.path.getctime(path_to_file)
 		if ctime < last_modified:
-			return ctime
+			return datetime.datetime.utcfromtimestamp(ctime).strftime("%Y-%m-%d") + " "
 		else:
-			return last_modified
+			return datetime.datetime.utcfromtimestamp(last_modified).strftime("%Y-%m-%d") + " "
 	else:
 		stat = os.stat(path_to_file)
 		try:
@@ -52,13 +52,13 @@ def main():
 	for f in files_in_dir(args.target):
 		# if the custom dating argument is set
 		if args.c:
-			newname = args.c + " " + os.path.basename(f)	
+			newname = args.c + " " + os.path.basename(f)
 		else:
-			newname = creation_date(f)+" "+os.path.basename(f)
-	
+			newname = str(creation_date(f))+" "+os.path.basename(f)
+
 		# create the new full path with the new name that was just created
 		newpath = os.path.join(os.path.dirname(f),newname)
-	
+
 		if args.i:
 			print "Would you like to rename", f, "to", newpath, "? y/n:"
 			if (raw_input() == 'y'):
