@@ -21,7 +21,6 @@ def proper_title(old_title):
     import re
     # find movie title
     # get rid of beginning number
-    #print "working on ", old_title
     temp = old_title.split("-", 1)[1]
 
     # when the year comes before the title

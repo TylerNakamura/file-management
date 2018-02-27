@@ -2,10 +2,26 @@ import subprocess
 import os
 import re
 
-# the regex to define tv show naming convention
+# RegEx Definitions...
 SHOW = '[Ss]\d{2}[Ee]\d{2}'
 VIDEO_TYPE = '\.(mkv|mp4|avi|mov)'
-YEAR = '[1990-2020]'
+SUBTITLE_FILE_TYPE = '\.(srt|sub|subtitle)'
+
+'''
+    returns True if the file path is a subtitle file
+    a subtitle is defined as a file matching the RegEx above
+    returns true if the regex is found in the base name of the file path
+'''
+def is_subtitle(file_path):
+    # get the file name of the full path
+    file_name = os.path.basename(file_path)
+
+    if re.search(SHOW, file_name) is not None:
+        print "Found that", file_name, "is a subtitle file..."
+        return True
+    else:
+        print "Found that", file_name, "is a not a subtitle file..." 
+        return False
 
 '''
     returns True if the file path is a show
@@ -39,7 +55,6 @@ def return_shows(files):
 '''
     returns the full file path of all the files in input directory
 '''
-
 
 def files_in_dir(directory):
     import os
