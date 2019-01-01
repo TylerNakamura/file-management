@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import time
 import datetime
+import dateutil.parser
 
 """
 	Try to get the date that a file was created, falling back to when it was
@@ -12,6 +13,8 @@ import datetime
 """
 def creation_date(path_to_file):
 	last_modified = os.path.getmtime(path_to_file)
+
+	print "System:", platform.system()
 
 	# if the system running the script is a Windows system
 	if platform.system() == 'Windows':
@@ -34,8 +37,20 @@ def creation_date(path_to_file):
 		# We're probably on Linux. No easy way to get creation dates here,
 		# so we'll settle for when its content was last modified.
 		except AttributeError:
-			mtime = stat.st_mtime
-			return datetime.datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%d")
+			from PIL import Image
+			mtime = datetime.datetime.utcfromtimestamp(stat.st_mtime)
+
+			# attempt to retrieve EXIF data for the original time of taken photo
+			try:
+				# exif docs
+				# https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/datetimeoriginal.html
+				eData = datetime.datetime.strptime(Image.open(path_to_file)._getexif()[36867], '%Y:%m:%d %H:%M:%S')
+			except KeyError:
+				print "Unable to find exif info for", path_to_file
+				return mtime.strftime("%Y-%m-%d")
+
+			# if we could get exif data, let's use that
+			return eData.strftime("%Y-%m-%d")
 '''
 	returns a list of files (full path) within the directory
 	note that this method recurses
@@ -65,7 +80,7 @@ def main():
 
 		# create the new full path with the new name that was just created
 		newpath = os.path.join(os.path.dirname(f),newname)
-	
+
 		# if interactive mode is being used, ask the user if they would like to proceed with the action
 		if args.i:
 			print "Would you like to rename", f, "to", newpath, "? y/n:"
