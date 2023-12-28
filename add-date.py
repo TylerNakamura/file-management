@@ -1,94 +1,55 @@
 import os
-import platform
-import argparse
-import subprocess
-import time
 import datetime
-import dateutil.parser
+from PIL import Image
+from moviepy.editor import VideoFileClip
 
-"""
-	Try to get the date that a file was created, falling back to when it was
-	last modified if that isn't possible.
-	See http://stackoverflow.com/a/39501288/1709587 for explanation.
-"""
-def creation_date(path_to_file):
-	last_modified = os.path.getmtime(path_to_file)
+def get_earliest_date(directory):
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
-	print "System:", platform.system()
+    earliest_dates = {}
 
-	# if the system running the script is a Windows system
-	if platform.system() == 'Windows':
-		ctime = os.path.getctime(path_to_file)
-		if ctime < last_modified:
-			return datetime.datetime.utcfromtimestamp(ctime).strftime("%Y-%m-%d") + " "
-		else:
-			return datetime.datetime.utcfromtimestamp(last_modified).strftime("%Y-%m-%d") + " "
-	# if the system running the script is NOT a Windows system
-	else:
-		stat = os.stat(path_to_file)
-		try:
-			birthtime = stat.st_birthtime
-			# We are really looking for the earliest known date here.
-			# This happens to be a personal preference as I think it is the best known guess of when the file was created
-			if birthtime < last_modified:
-				return datetime.datetime.utcfromtimestamp(birthtime).strftime("%Y-%m-%d")
-			else:
-				return datetime.datetime.utcfromtimestamp(last_modified).strftime("%Y-%m-%d")
-		# We're probably on Linux. No easy way to get creation dates here,
-		# so we'll settle for when its content was last modified.
-		except AttributeError:
-			from PIL import Image
-			mtime = datetime.datetime.utcfromtimestamp(stat.st_mtime)
+    for file in files:
+        print(f"Processing file: {file}")  # Debug print
 
-			# attempt to retrieve EXIF data for the original time of taken photo
-			try:
-				# exif docs
-				# https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/datetimeoriginal.html
-				eData = datetime.datetime.strptime(Image.open(path_to_file)._getexif()[36867], '%Y:%m:%d %H:%M:%S')
-			except KeyError:
-				print "Unable to find exif info for", path_to_file
-				return mtime.strftime("%Y-%m-%d")
+        file_path = os.path.join(directory, file)
 
-			# if we could get exif data, let's use that
-			return eData.strftime("%Y-%m-%d")
-'''
-	returns a list of files (full path) within the directory
-	note that this method recurses
-'''
-def files_in_dir(directory):
-	ret_files = []
-	for root, dirs, files in os.walk(directory):
-		for i in files:
-			ret_files.append(os.path.join(root, i))
-	return ret_files
+        if file.lower().endswith('.jpg'):
+            try:
+                with Image.open(file_path) as img:
+                    exif_data = img._getexif()
+                    creation_time = exif_data.get(36867)
+                    if creation_time:
+                        earliest_time = datetime.datetime.strptime(creation_time, '%Y:%m:%d %H:%M:%S')
+                        earliest_dates[file] = earliest_time
+            except (AttributeError, KeyError, IndexError):
+                earliest_dates[file] = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
 
-def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument("target", help="the directory to be renamed")
-	parser.add_argument("-i", action="store_true", help="interactively rename files")
-	parser.add_argument("-c", help="Set a custom date")
-	args = parser.parse_args()
+        elif file.lower().endswith('.mov'):
+            try:
+                clip = VideoFileClip(file_path)
+                creation_time = clip.reader.metadata.get('creation_time')
+                if creation_time:
+                    earliest_time = datetime.datetime.strptime(creation_time, '%Y-%m-%d %H:%M:%S')
+                    earliest_dates[file] = earliest_time
+                clip.close()
+            except Exception as e:
+                earliest_dates[file] = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
 
-	# for every file in our target directory
-	for f in files_in_dir(args.target):
-		# if the custom dating argument is set and we want to specify a custom date
-		if args.c:
-			newname = args.c + " " + os.path.basename(f)
-		# otherwise, let's make our best guess and use the earliest of the creation or modification date
-		else:
-			newname = str(creation_date(f))+" "+os.path.basename(f)
+        else:
+            earliest_dates[file] = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
 
-		# create the new full path with the new name that was just created
-		newpath = os.path.join(os.path.dirname(f),newname)
+    return earliest_dates
 
-		# if interactive mode is being used, ask the user if they would like to proceed with the action
-		if args.i:
-			print "Would you like to rename", f, "to", newpath, "? y/n:"
-			if (raw_input() == 'y'):
-				os.rename(f, newpath)
-		# otherwise, just pull the trigger
-		else:
-			os.rename(f, newpath)
+# Replace 'your_directory_path' with the path to your directory
+directory_path = '/app/src'
 
-if __name__ == "__main__":
-	main()
+if os.path.exists(directory_path) and os.path.isdir(directory_path):
+    print("Scanning directory...")  # Debug print
+    earliest_dates = get_earliest_date(directory_path)
+    for file, date in earliest_dates.items():
+        formatted_date = date.strftime('%Y-%m-%d')  # Adjust the format here
+        new_name = f"{formatted_date}-{file}"
+        os.rename(os.path.join(directory_path, file), os.path.join(directory_path, new_name))
+        print(f"Renamed: {file} to {new_name}")
+else:
+    print("Directory not found.")
