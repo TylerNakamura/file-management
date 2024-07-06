@@ -5,7 +5,7 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the Python script into the container
-COPY add-date2.py .
+COPY add-date.py .
 
 # Install necessary packages
 RUN pip install Pillow moviepy
