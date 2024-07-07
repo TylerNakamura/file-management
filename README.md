@@ -37,3 +37,7 @@ mv *.png pic/
 mv *.jpg pic/
 mv *.jpeg pic/
 ```
+
+TODO:
+
+Include rclone commands to move everything to AND from Google drive
