@@ -56,7 +56,6 @@ mv *.jpeg pic/
 ```
 
 
-
-TODO:
-
-Include rclone commands to move everything to AND from Google drive
+```
+rclone move -P --checkers=8 --transfers=4 ~/Desktop/src tylercnakamuragdrive:/
+```
